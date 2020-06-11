@@ -4,10 +4,28 @@ from loss import mix_loss
 from keras.layers import Input, UpSampling2D, add, Conv2D, Lambda
 from keras.models import Model
 from keras.optimizers import Adam
+from keras.utils.multi_gpu_utils import multi_gpu_model
+import keras.backend as K
+import os
+
+# os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+
+###### custom metrics ######
+def kp_loss(y_true, y_pred):
+    return K.mean(y_pred[:,1])
+
+def conf_loss(y_true, y_pred):
+    return K.mean(y_pred[:,2])
+
+def cls_loss(y_true, y_pred):
+    return K.mean(y_pred[:,3])
+
+metric_lst = [kp_loss, conf_loss, cls_loss]
+
 
 
 def poly_yolo(input_shape=(224,640,1), n_classes=1, backbone='darknet',
-              lr=3e-4, decay=5e-6):
+              lr=3e-4, decay=5e-6, multi_gpu=False, GPU_COUNT=2, weight_pt=''):
 
     inpt = Input(input_shape)
 
@@ -26,11 +44,27 @@ def poly_yolo(input_shape=(224,640,1), n_classes=1, backbone='darknet',
     # head: 1x1
     x = Conv2D(2+1+n_classes, 1, strides=1, padding='same')(x)      # x,y,conf,cls
 
-    # model
-    model = Model(inpt, x)
-    model.compile(Adam(lr=lr, decay=decay), loss=mix_loss, metrics=None)
+    # yt: [b,h,w,2+1+cls]
+    y_true = Input((input_shape[0]//4, input_shape[1]//4, 2+1+n_classes))
 
-    return model
+    # loss
+    loss = Lambda(mix_loss)([y_true, x])
+
+    # model
+    model = Model([inpt, y_true], loss)
+
+    if os.path.exists(weight_pt):
+        print("load weight: ", weight_pt)
+        model.load_weights(weight_pt, by_name=True, skip_mismatch=True)
+    single_model = model
+    if multi_gpu:
+        model = multi_gpu_model(model, gpus=GPU_COUNT)
+
+    model.compile(Adam(lr=lr, decay=decay),
+                  loss=lambda y_true,y_pred: K.mean(y_pred[:,0]),
+                  metrics=metric_lst)
+
+    return model, single_model
 
 
 def feats_fusion(feats, n_filters):
@@ -49,7 +83,7 @@ def feats_fusion(feats, n_filters):
 
 if __name__ == '__main__':
 
-    model = poly_yolo(input_shape=(128,640,1), n_classes=1, backbone='efficientNet')
+    model, _ = poly_yolo(input_shape=(128,640,1), n_classes=10, backbone='efficientNet')
     model.summary()
 
 

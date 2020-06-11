@@ -22,3 +22,17 @@
     x = gx / grid_shape_w
     y = gy / grid_shape_h
 
+
+## loss
+    xy_offset, 相对于grid coords, sigmoid以后位于[0,1]
+    conf, sigmoid以后表示posibility, 位于[0,1]
+    cls, sigmoid以后表示posibility, 位于[0,1]
+    所以三个loss都是bce，我刚开始conf_loss用了focal loss，网络很快收敛但是效果巨差，
+    换成bce以后其他两个loss仍旧很小，conf_loss变得贼大，所以focal loss可能写错了
+
+
+## todolist
+    8倍下采样
+    check focal loss
+
+
