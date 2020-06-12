@@ -17,8 +17,9 @@ def mix_loss(args):
     # cls_loss: bce_loss
     cls_loss_ = cls_loss(y_true, y_pred)
 
-    loss = kp_loss_ + conf_loss_ + cls_loss_
-    loss = tf.Print(loss, [loss, kp_loss_, conf_loss_, cls_loss_], message='  loss:  ')
+    loss = kp_loss_ + conf_loss_ + cls_loss_      # (B,1)
+
+    loss = tf.Print(loss, [K.mean(kp_loss_), K.mean(conf_loss_), K.mean(cls_loss_)], message='  loss:  ')
 
     # return loss
     return tf.stack([loss, kp_loss_, conf_loss_, cls_loss_])
@@ -61,7 +62,7 @@ def conf_loss(y_true, y_pred):
     # conf_gt = y_true[...,2:3]
     # conf_pred = K.sigmoid(y_pred[...,2:3])
     # epsilon = K.epsilon()
-    # pt = 1 - (conf_gt - conf_pred)
+    # pt = 1 - K.abs(conf_gt - conf_pred)
     # pt = K.clip(pt, epsilon, 1-epsilon)
     # alpha_mask = tf.where(conf_gt>0, tf.ones_like(conf_gt)*alpha, tf.ones_like(conf_gt)*(1-alpha))
     # focal_loss_ = -alpha_mask * K.pow(pt, gamma) * K.log(pt)
