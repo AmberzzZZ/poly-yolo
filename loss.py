@@ -64,8 +64,7 @@ def conf_loss(y_true, y_pred):
     # epsilon = K.epsilon()
     # pt = 1 - K.abs(conf_gt - conf_pred)
     # pt = K.clip(pt, epsilon, 1-epsilon)
-    # alpha_mask = tf.where(conf_gt>0, tf.ones_like(conf_gt)*alpha, tf.ones_like(conf_gt)*(1-alpha))
-    # focal_loss_ = -alpha_mask * K.pow(pt, gamma) * K.log(pt)
+    # focal_loss_ = -alpha * K.pow(1-pt, gamma) * K.log(pt)
     # return K.sum(focal_loss_, axis=[1,2,3])
     conf_gt = y_true[...,2:3]
     conf_pred = y_pred[...,2:3]

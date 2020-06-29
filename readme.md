@@ -29,6 +29,7 @@
     cls, sigmoid以后表示posibility, 位于[0,1]
     所以三个loss都是bce，我刚开始conf_loss用了focal loss，网络很快收敛但是效果巨差，
     换成bce以后其他两个loss仍旧很小，conf_loss变得贼大，所以focal loss可能写错了
+    focal loss果然写错了。。。FL=-alpha * (1-pt)^gamma * log(pt)
 
 
 ## todolist
